@@ -1,0 +1,79 @@
+#include <iostream>
+#include <fstream>
+
+using uint = unsigned int;
+using ushort = unsigned short;
+using uchar = unsigned char;
+
+struct BMPID
+{
+    uchar data[2];
+};
+
+#pragma pack(push, 1)
+struct BMPReader
+{
+    // bmp header
+    BMPID id;
+    uint filesize;
+    ushort reserved1;
+    ushort reserved2;
+    uint dataoffset;
+    // dib header
+    uint dibsize;
+    uint dibwidth;
+    uint dibheight;
+    ushort colorplane;
+    ushort bits_per_pixel;
+    uint compression;
+    uint rawsize;
+    uint horizontal;
+    uint vertical;
+    uint color_used;
+    uint color_important;
+};
+#pragma pack(pop)
+
+void open(std::string filename)
+{
+    std::ifstream file(filename.c_str(), std::ios::in | std::ios::binary);
+
+    if (!file)
+    {
+        std::cerr << filename << "could not be opened !" << std::endl;
+    }
+    else
+    {
+        BMPID bmpid;
+        file.read((char*)(&bmpid), sizeof(bmpid));
+
+        if (bmpid.data[0] != 'B' || bmpid.data[1] != 'M')
+        {
+            std::cerr << filename << "is not in BMP format." << std::endl;
+        }
+        else
+        {
+            BMPReader header;
+            file.read((char*)(&header), sizeof(header));
+            BMPReader dibheader;
+            file.read((char*)(&dibheader), sizeof(dibheader));
+
+            if (dibheader.bits_per_pixel != 24)
+            {
+                std::cerr << filename << "uses" << dibheader.bits_per_pixel
+                    << "bits per pixel. Bitmap only supports 24bit." << std::endl;
+            }
+            file.seekg(header.dataoffset);
+        }
+    }
+}
+
+int main()
+{
+    std::cout << "Hello World!\n";
+}
+
+
+
+// https://github.com/kbuffardi/Bitmap/blob/master/bitmap.cpp
+// https://github.com/baderouaich/BitmapPlusPlus
